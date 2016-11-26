@@ -29,8 +29,8 @@ function Field(width, height) {
   }
   
   //Draw border
-  paper.rect(0,0, RECT_SIZE * FIELD_WIDTH, RECT_SIZE * FIELD_HEIGHT).attr({
-    stroke : 'red'
+  paper.rect(0, 0, RECT_SIZE * FIELD_WIDTH, RECT_SIZE * FIELD_HEIGHT).attr({
+    stroke: 'red'
   })
 }
 
@@ -101,8 +101,8 @@ Field.prototype.getFilledRows = function () {
 
 Field.prototype.removeRow = function (y) {
   
-  for (var i = y; i > 0; i--){
-    this.field[i] = this.field[i-1].slice();
+  for (var i = y; i > 0; i--) {
+    this.field[i] = this.field[i - 1].slice();
   }
   
 };
@@ -136,7 +136,7 @@ Figure.prototype.generate = function () {
       [1, 1, 0],
       [1, 0, 0]
     ],
-    [
+    [// Z
       [0, 1, 0],
       [0, 1, 1],
       [0, 0, 1]
@@ -145,7 +145,7 @@ Figure.prototype.generate = function () {
       [1, 1],
       [1, 1]
     ],
-    [//I
+    [// I
       [0, 0, 0, 0, 0],
       [0, 0, 1, 0, 0],
       [0, 0, 1, 0, 0],
