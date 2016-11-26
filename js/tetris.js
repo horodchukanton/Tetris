@@ -12,6 +12,9 @@ const RECT_SIZE    = 25;
 const FIELD_WIDTH  = 10;
 const FIELD_HEIGHT = 20;
 
+const RECT_COLOR = 'lightgreen';
+const RECT_STROKE = 'black';
+
 var paper = Raphael('canvas', FIELD_WIDTH * RECT_SIZE, FIELD_HEIGHT * RECT_SIZE);
 
 function Field(width, height) {
@@ -30,7 +33,7 @@ function Field(width, height) {
   
   //Draw border
   paper.rect(0, 0, RECT_SIZE * FIELD_WIDTH, RECT_SIZE * FIELD_HEIGHT).attr({
-    stroke: 'red'
+    stroke: RECT_STROKE
   })
 }
 
@@ -48,8 +51,8 @@ Field.prototype.render = function () {
     row.forEach(function (col, x) {
       if (col)
         paper.rect(x * RECT_SIZE, y * RECT_SIZE, RECT_SIZE, RECT_SIZE).attr({
-          fill  : 'black',
-          stroke: 'red'
+          fill  : RECT_COLOR,
+          stroke: RECT_STROKE
         });
     })
   });
@@ -198,8 +201,8 @@ Figure.prototype.render = function () {
     row.forEach(function (col, x) {
       if (col)
         paper.rect((x + self.offset.x) * RECT_SIZE, (y + self.offset.y) * RECT_SIZE, RECT_SIZE, RECT_SIZE).attr({
-          fill  : 'black',
-          stroke: 'red'
+          fill  : RECT_COLOR,
+          stroke: RECT_STROKE
         });
     })
   });
