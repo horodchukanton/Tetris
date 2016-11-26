@@ -15,27 +15,35 @@ const FIELD_HEIGHT = 20;
 var paper = Raphael('canvas', FIELD_WIDTH * RECT_SIZE, FIELD_HEIGHT * RECT_SIZE);
 
 function Field(width, height) {
-  this.field  = [];
-  this.width  = width;
-  this.height = height;
+  this.field    = [];
+  this.width    = width;
+  this.height   = height;
+  this.rendered = null;
   
+  // Fill with empty matrix
   for (var i = 0; i < height; i++) {
     this.field[i] = [];
     for (var j = 0; j < width; j++) {
       this.field[i][j] = 0;
     }
   }
+  
+  //Draw border
+  paper.rect(0,0, RECT_SIZE * FIELD_WIDTH, RECT_SIZE * FIELD_HEIGHT).attr({
+    stroke : 'red'
+  })
 }
 
 Field.prototype.clear = function () {
-  paper.rect(0, 0, this.width * RECT_SIZE, this.height * RECT_SIZE).attr({
-    fill  : 'white',
-    stroke: 'red'
-  });
+  if (this.rendered !== null) {
+    this.rendered.remove();
+    this.rendered.clear();
+  }
 };
 
 Field.prototype.render = function () {
   this.clear();
+  paper.setStart();
   this.field.forEach(function (row, y) {
     row.forEach(function (col, x) {
       if (col)
@@ -45,6 +53,7 @@ Field.prototype.render = function () {
         });
     })
   });
+  this.rendered = paper.setFinish();
 };
 
 
@@ -61,7 +70,7 @@ Field.prototype.willCollide = function (figure) {
   const m = figure.model, o = figure.offset, f = this.field;
   for (var y = 0; y < m.length; y++) {
     for (var x = 0; x < m[y].length; x++) {
-      if (m[y][x] !== 0 &&
+      if (m[y][x] === 1 &&
           (f[y + o.y] && f[y + o.y][x + o.x]) !== 0)
         return true;
     }
@@ -69,7 +78,7 @@ Field.prototype.willCollide = function (figure) {
   return false;
 };
 
-Field.prototype.getFilledRows = function(){
+Field.prototype.getFilledRows = function () {
   const f = this.field;
   
   var filled_rows = [];
@@ -78,10 +87,10 @@ Field.prototype.getFilledRows = function(){
     var row_is_filled = true;
     
     for (var x = 0; x < f[y].length; x++) {
-       if (f[y][x] == 0) {
-         row_is_filled = false;
-         break;
-       }
+      if (f[y][x] == 0) {
+        row_is_filled = false;
+        break;
+      }
     }
     
     if (row_is_filled) filled_rows[filled_rows.length] = y;
@@ -91,35 +100,38 @@ Field.prototype.getFilledRows = function(){
 };
 
 Field.prototype.removeRow = function (y) {
+  
   for (var i = y; i > 0; i--){
-    this.field[i] = this.field[i-1];
+    this.field[i] = this.field[i-1].slice();
   }
+  
 };
 
 function Figure() {
-  this.offset = {x: 3, y: 0};
-  this.ticks  = 0;
-  this.model  = this.generate();
+  this.offset   = {x: 3, y: 0};
+  this.ticks    = 0;
+  this.rendered = null;
+  this.model    = this.generate();
 }
 
 Figure.prototype.generate = function () {
   var models = [
-    [
+    [// T
       [0, 1, 0],
       [1, 1, 1],
       [0, 0, 0]
     ],
-    [
+    [// L
       [0, 1, 0],
       [0, 1, 0],
       [0, 1, 1]
     ],
-    [
+    [// J
       [0, 1, 0],
       [0, 1, 0],
       [1, 1, 0]
     ],
-    [
+    [// S
       [0, 1, 0],
       [1, 1, 0],
       [1, 0, 0]
@@ -129,18 +141,17 @@ Figure.prototype.generate = function () {
       [0, 1, 1],
       [0, 0, 1]
     ],
-    [
-      [0, 0, 0, 0],
-      [0, 1, 1, 0],
-      [0, 1, 1, 0],
-      [0, 0, 0, 0]
+    [// O
+      [1, 1],
+      [1, 1]
     ],
-    [
-      [0, 0, 1, 0 ],
-      [0, 0, 1, 0 ],
-      [0, 0, 1, 0 ],
-      [0, 0, 1, 0 ]
-      
+    [//I
+      [0, 0, 0, 0, 0],
+      [0, 0, 1, 0, 0],
+      [0, 0, 1, 0, 0],
+      [0, 0, 1, 0, 0],
+      [0, 0, 1, 0, 0],
+      [0, 0, 0, 0, 0]
     ]
   ];
   
@@ -171,8 +182,18 @@ Figure.prototype.rotate = function (direction) {
   return this.model;
 };
 
+Figure.prototype.clear = function () {
+  if (this.rendered !== null) {
+    this.rendered.remove();
+    this.rendered.clear();
+  }
+};
+
 Figure.prototype.render = function () {
   var self = this;
+  this.clear();
+  
+  paper.setStart();
   this.model.forEach(function (row, y) {
     row.forEach(function (col, x) {
       if (col)
@@ -182,13 +203,14 @@ Figure.prototype.render = function () {
         });
     })
   });
+  this.rendered = paper.setFinish();
 };
 
 
 function Game() {
-  this.field   = new Field(FIELD_WIDTH, FIELD_HEIGHT);
-  this.figure  = new Figure();
-  this.score = new Score();
+  this.field  = new Field(FIELD_WIDTH, FIELD_HEIGHT);
+  this.figure = new Figure();
+  this.score  = new Score();
 }
 Game.prototype.rotate = function (direction) {
   this.figure.rotate(direction);
@@ -214,9 +236,12 @@ Game.prototype.nextTick = function () {
 };
 
 Game.prototype.gameOver = function () {
-  this.field   = new Field(FIELD_WIDTH, FIELD_HEIGHT);
-  this.figure  = new Figure();
+  this.field.clear();
+  this.figure.clear();
   this.score.clear();
+  
+  this.field  = new Field(FIELD_WIDTH, FIELD_HEIGHT);
+  this.figure = new Figure();
 };
 
 Game.prototype.moveDown = function (byTick) {
@@ -237,20 +262,21 @@ Game.prototype.moveDown = function (byTick) {
 };
 
 Game.prototype.nextAnimationFrame = function () {
-  this.field.render();
   this.figure.render();
+  this.field.render();
+  
 };
 
 Game.prototype.checkFilledRows = function () {
   var filled_rows = this.field.getFilledRows();
-  var count = filled_rows.length;
+  var count       = filled_rows.length;
   
-  if (count > 0){
+  if (count > 0) {
     const f = this.field;
-    filled_rows.forEach(function(row_index){
+    filled_rows.forEach(function (row_index) {
       f.removeRow(row_index);
     });
-    
+    this.field.render();
     this.updateScore(count);
   }
 };
@@ -259,32 +285,32 @@ Game.prototype.nextFigure = function () {
   this.field.merge(this.figure);
   
   this.checkFilledRows();
-
+  
+  this.figure.clear();
   this.figure = new Figure();
   
+  this.nextAnimationFrame();
   // Check for the end
-  if (this.field.willCollide(this.figure)) {
-    this.nextAnimationFrame();
-    return false;
-  }
-  
-  return true;
+  return !this.field.willCollide(this.figure);
 };
 
-Game.prototype.updateScore = function(score){
+Game.prototype.updateScore = function (score) {
   this.score.update(score)
 };
 
-function KeyboardButton(id, listener){
-  var self = this;
+function KeyboardButton(id, listener) {
+  var self        = this;
   this.domElement = $('button#' + id);
-  this.domElement.on('click', function(){
+  
+  this.domElement.on('click', function () {
     self.domElement.addClass('btn-success');
-    setTimeout(function(){
+    setTimeout(function () {
       self.domElement.removeClass('btn-success');
     }, 200);
     listener();
   });
+  
+  
 }
 
 function KeyboardListener(options) {
@@ -297,34 +323,34 @@ function KeyboardListener(options) {
 }
 
 function Score() {
-  var self = this;
-  this.score = 0;
+  var self      = this;
+  this.score    = 0;
   this.maxScore = localStorage.getItem('tetris-maxScore') || 0;
   
-  this.scoreSpan = null;
+  this.scoreSpan    = null;
   this.maxScoreSpan = null;
   
   $(function () {
-    self.scoreSpan = $('#score');
+    self.scoreSpan    = $('#score');
     self.maxScoreSpan = $('#maxScore').text(self.maxScore);
   })
 }
 
-Score.prototype.update = function(score){
-  if (score > this.maxScore){
-    this.maxScore = score;
-    localStorage.setItem('tetris-maxScore', score);
+Score.prototype.update = function (score) {
+  this.score += score;
+  if (this.score > this.maxScore) {
+    this.maxScore = this.score;
+    localStorage.setItem('tetris-maxScore', this.score);
     this.maxScoreSpan.text(this.maxScore);
   }
   
-  this.scoreSpan.text(score);
+  this.scoreSpan.text(this.score);
 };
 
 Score.prototype.clear = function () {
   this.score = 0;
   this.scoreSpan.text(0);
 };
-
 
 
 $(function () {
@@ -338,7 +364,7 @@ $(function () {
   listener_options[KEY_RIGHT] = function () {game.move(1)};
   listener_options[KEY_DOWN]  = function () {if (!game.moveDown(false)) game.nextFigure() };
   listener_options[KEY_UP]    = function () {game.rotate(1) };
-
+  
   
   new KeyboardButton('btnUp', listener_options[KEY_UP]);
   new KeyboardButton('btnDown', listener_options[KEY_DOWN]);
@@ -346,5 +372,5 @@ $(function () {
   new KeyboardButton('btnRight', listener_options[KEY_RIGHT]);
   
   new KeyboardListener(listener_options);
-  $(window).on('scroll', function(){return false});
+  $(window).on('scroll', function () {return false});
 });
