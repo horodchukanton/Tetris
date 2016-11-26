@@ -7,7 +7,6 @@ const KEY_LEFT  = 37;
 const KEY_UP    = 38;
 const KEY_RIGHT = 39;
 const KEY_DOWN  = 40;
-const KEY_S  = 83;
 
 const RECT_SIZE    = 25;
 const FIELD_WIDTH  = 10;
@@ -276,6 +275,18 @@ Game.prototype.updateScore = function(score){
   this.score.update(score)
 };
 
+function KeyboardButton(id, listener){
+  var self = this;
+  this.domElement = $('button#' + id);
+  this.domElement.on('click', function(){
+    self.domElement.addClass('btn-success');
+    setTimeout(function(){
+      self.domElement.removeClass('btn-success');
+    }, 200);
+    listener();
+  });
+}
+
 function KeyboardListener(options) {
   $(document).on('keydown', function (e) {
     if (options['' + e.keyCode]) {
@@ -314,6 +325,8 @@ Score.prototype.clear = function () {
   this.scoreSpan.text(0);
 };
 
+
+
 $(function () {
   var game    = new Game();
   game.figure = new Figure();
@@ -323,22 +336,14 @@ $(function () {
   var listener_options        = {};
   listener_options[KEY_LEFT]  = function () {game.move(-1)};
   listener_options[KEY_RIGHT] = function () {game.move(1)};
-  listener_options[KEY_DOWN]  = function () {
-    if (!game.moveDown(false)) game.nextFigure();
-  };
+  listener_options[KEY_DOWN]  = function () {if (!game.moveDown(false)) game.nextFigure() };
   listener_options[KEY_UP]    = function () {game.rotate(1) };
-  listener_options[KEY_S]     = function () {
-    var debug_model = [];
-    for(var i= 0; i < FIELD_WIDTH; i++){
-      debug_model[i] = [];
-      for (var j = 0; j < FIELD_WIDTH; j++){
-        debug_model[i][j] = 1;
-      }
-    }
-    
-    game.figure.model = debug_model;
-    game.figure.offset = {x: 0, y: 0};
-  };
+
+  
+  new KeyboardButton('btnUp', listener_options[KEY_UP]);
+  new KeyboardButton('btnDown', listener_options[KEY_DOWN]);
+  new KeyboardButton('btnLeft', listener_options[KEY_LEFT]);
+  new KeyboardButton('btnRight', listener_options[KEY_RIGHT]);
   
   new KeyboardListener(listener_options);
   $(window).on('scroll', function(){return false});
