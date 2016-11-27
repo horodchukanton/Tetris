@@ -212,9 +212,36 @@ Figure.prototype.render = function () {
 
 function Game() {
   this.field  = new Field(FIELD_WIDTH, FIELD_HEIGHT);
-  this.figure = new Figure();
   this.score  = new Score();
+  this.figure = new Figure();
+  this.speed = 1;
+  this.interval_handler = null;
 }
+
+Game.prototype.start = function(){
+  this.figure = new Figure();
+  this.setSpeed(this.speed);
+};
+
+Game.prototype.setSpeed = function (new_speed) {
+  this.speed = new_speed;
+  
+  clearInterval(this.interval_handler);
+  this.interval_handler = setInterval(this.nextTick.bind(this), 1000 / new_speed);
+  $('#speed').text(new_speed);
+};
+
+Game.prototype.restart = function(){
+  this.field.clear();
+  this.figure.clear();
+  this.score.clear();
+  
+  this.field  = new Field(FIELD_WIDTH, FIELD_HEIGHT);
+  this.figure = new Figure();
+  
+  this.setSpeed(1);
+};
+
 Game.prototype.rotate = function (direction) {
   this.figure.rotate(direction);
   
@@ -239,12 +266,7 @@ Game.prototype.nextTick = function () {
 };
 
 Game.prototype.gameOver = function () {
-  this.field.clear();
-  this.figure.clear();
-  this.score.clear();
-  
-  this.field  = new Field(FIELD_WIDTH, FIELD_HEIGHT);
-  this.figure = new Figure();
+  this.restart();
 };
 
 Game.prototype.moveDown = function (byTick) {
@@ -293,12 +315,19 @@ Game.prototype.nextFigure = function () {
   this.figure = new Figure();
   
   this.nextAnimationFrame();
-  // Check for the end
+  
+  // Check we can insert new figure
   return !this.field.willCollide(this.figure);
 };
 
-Game.prototype.updateScore = function (score) {
-  this.score.update(score)
+Game.prototype.updateScore = function (rows_count) {
+  this.score.update(rows_count);
+  
+  var rows = this.score.getScore();
+  
+  if (Math.floor(rows / 10) + 1 > this.speed){
+    this.setSpeed(this.speed + 1);
+  }
 };
 
 function KeyboardButton(id, listener) {
@@ -350,6 +379,10 @@ Score.prototype.update = function (score) {
   this.scoreSpan.text(this.score);
 };
 
+Score.prototype.getScore = function () {
+  return this.score;
+};
+
 Score.prototype.clear = function () {
   this.score = 0;
   this.scoreSpan.text(0);
@@ -358,9 +391,7 @@ Score.prototype.clear = function () {
 
 $(function () {
   var game    = new Game();
-  game.figure = new Figure();
-  
-  setInterval(game.nextTick.bind(game), 1000);
+  game.start();
   
   var listener_options        = {};
   listener_options[KEY_LEFT]  = function () {game.move(-1)};
