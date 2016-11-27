@@ -332,29 +332,45 @@ Game.prototype.updateScore = function (rows_count) {
   }
 };
 
-function KeyboardButton(id, listener) {
-  var self        = this;
-  this.domElement = $('button#' + id);
+/**
+ * VirtualKeyboard with DOMButtons
+ * @param options
+ *   keycode : [ DOM_id, listener ]
+ * @constructor
+ */
+function VirtualKeyboard(options){
+  this.keys = [];
   
-  this.domElement.on('click', function () {
-    self.domElement.addClass('btn-success');
-    setTimeout(function () {
-      self.domElement.removeClass('btn-success');
-    }, 200);
-    listener();
-  });
+  for (var keyCode in options){
+    if (!options.hasOwnProperty(keyCode)) continue;
+    this.keys[keyCode] = new VirtualKeyboardButton(options[keyCode]['id'], options[keyCode]['listener']);
+  }
   
-  
-}
-
-function KeyboardListener(options) {
+  var self = this;
   $(document).on('keydown', function (e) {
-    if (options['' + e.keyCode]) {
+    if (typeof self.keys[e.keyCode] !== 'undefined'){
       e.preventDefault();
-      options[e.keyCode]();
+      self.keys[e.keyCode].click();
     }
   });
 }
+
+function VirtualKeyboardButton(id, listener) {
+  this.domElement = $('button#' + id);
+  this.listener = listener;
+  this.domElement.on('click', this.click.bind(this));
+}
+
+VirtualKeyboardButton.prototype.click = function () {
+  this.domElement.addClass('btn-success');
+  
+  var self = this;
+  setTimeout(function () {
+    self.domElement.removeClass('btn-success');
+  }, 200);
+  
+  this.listener();
+};
 
 function Score() {
   var self      = this;
@@ -381,10 +397,6 @@ Score.prototype.update = function (score) {
   this.scoreSpan.text(this.score);
 };
 
-Score.prototype.getScore = function () {
-  return this.score;
-};
-
 Score.prototype.clear = function () {
   this.score = 0;
   this.scoreSpan.text(0);
@@ -395,18 +407,13 @@ $(function () {
   var game    = new Game();
   game.start();
   
-  var listener_options        = {};
-  listener_options[KEY_LEFT]  = function () {game.move(-1)};
-  listener_options[KEY_RIGHT] = function () {game.move(1)};
-  listener_options[KEY_DOWN]  = function () {if (!game.moveDown(false)) game.nextFigure() };
-  listener_options[KEY_UP]    = function () {game.rotate(1) };
+  var keyboard_options        = [];
+  keyboard_options[KEY_LEFT]  = { id: 'btnLeft', listener : function () {game.move(-1)}};
+  keyboard_options[KEY_RIGHT] = { id : 'btnRight', listener : function () {game.move(1)}};
+  keyboard_options[KEY_DOWN]  = { id : 'btnDown', listener : function () {if (!game.moveDown(false)) game.nextFigure() }};
+  keyboard_options[KEY_UP]    = { id : 'btnUp', listener : function () {game.rotate(1) }};
   
+  new VirtualKeyboard(keyboard_options);
   
-  new KeyboardButton('btnUp', listener_options[KEY_UP]);
-  new KeyboardButton('btnDown', listener_options[KEY_DOWN]);
-  new KeyboardButton('btnLeft', listener_options[KEY_LEFT]);
-  new KeyboardButton('btnRight', listener_options[KEY_RIGHT]);
-  
-  new KeyboardListener(listener_options);
   $(window).on('scroll', function () {return false});
 });
