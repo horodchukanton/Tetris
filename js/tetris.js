@@ -12,7 +12,7 @@ const RECT_SIZE    = 25;
 const FIELD_WIDTH  = 10;
 const FIELD_HEIGHT = 20;
 
-const RECT_COLOR = 'lightgreen';
+const RECT_COLOR  = 'lightgreen';
 const RECT_STROKE = 'black';
 
 var paper = Raphael('canvas', FIELD_WIDTH * RECT_SIZE, FIELD_HEIGHT * RECT_SIZE);
@@ -211,15 +211,15 @@ Figure.prototype.render = function () {
 
 
 function Game() {
-  this.field  = new Field(FIELD_WIDTH, FIELD_HEIGHT);
-  this.score  = new Score();
-  this.figure = new Figure();
-  this.rows_collected = 0;
-  this.speed = 1;
+  this.field            = new Field(FIELD_WIDTH, FIELD_HEIGHT);
+  this.score            = new Score();
+  this.figure           = new Figure();
+  this.rows_collected   = 0;
+  this.speed            = 1;
   this.interval_handler = null;
 }
 
-Game.prototype.start = function(){
+Game.prototype.start = function () {
   this.figure = new Figure();
   this.setSpeed(this.speed);
 };
@@ -228,17 +228,20 @@ Game.prototype.setSpeed = function (new_speed) {
   this.speed = new_speed;
   
   clearInterval(this.interval_handler);
+  
   this.interval_handler = setInterval(this.nextTick.bind(this), 1000 / new_speed);
   $('#speed').text(new_speed);
 };
 
-Game.prototype.restart = function(){
+Game.prototype.restart = function () {
   this.field.clear();
   this.figure.clear();
   this.score.clear();
   
-  this.field  = new Field(FIELD_WIDTH, FIELD_HEIGHT);
-  this.figure = new Figure();
+  this.field            = new Field(FIELD_WIDTH, FIELD_HEIGHT);
+  this.score            = new Score();
+  this.figure           = new Figure();
+  this.rows_collected   = 0;
   
   this.setSpeed(1);
 };
@@ -327,7 +330,7 @@ Game.prototype.updateScore = function (rows_count) {
   
   this.score.update(rows_count * this.speed);
   
-  if (Math.floor(this.rows_collected / 10) + 1 > this.speed){
+  if (Math.floor(this.rows_collected / 10) + 1 > this.speed) {
     this.setSpeed(this.speed + 1);
   }
 };
@@ -338,17 +341,17 @@ Game.prototype.updateScore = function (rows_count) {
  *   keycode : [ DOM_id, listener ]
  * @constructor
  */
-function VirtualKeyboard(options){
+function VirtualKeyboard(options) {
   this.keys = [];
   
-  for (var keyCode in options){
+  for (var keyCode in options) {
     if (!options.hasOwnProperty(keyCode)) continue;
     this.keys[keyCode] = new VirtualKeyboardButton(options[keyCode]['id'], options[keyCode]['listener']);
   }
   
   var self = this;
   $(document).on('keydown', function (e) {
-    if (typeof self.keys[e.keyCode] !== 'undefined'){
+    if (typeof self.keys[e.keyCode] !== 'undefined') {
       e.preventDefault();
       self.keys[e.keyCode].click();
     }
@@ -357,7 +360,7 @@ function VirtualKeyboard(options){
 
 function VirtualKeyboardButton(id, listener) {
   this.domElement = $('button#' + id);
-  this.listener = listener;
+  this.listener   = listener;
   this.domElement.on('click', this.click.bind(this));
 }
 
@@ -404,14 +407,26 @@ Score.prototype.clear = function () {
 
 
 $(function () {
-  var game    = new Game();
+  var game = new Game();
   game.start();
   
   var keyboard_options        = [];
-  keyboard_options[KEY_LEFT]  = { id: 'btnLeft', listener : function () {game.move(-1)}};
-  keyboard_options[KEY_RIGHT] = { id : 'btnRight', listener : function () {game.move(1)}};
-  keyboard_options[KEY_DOWN]  = { id : 'btnDown', listener : function () {if (!game.moveDown(false)) game.nextFigure() }};
-  keyboard_options[KEY_UP]    = { id : 'btnUp', listener : function () {game.rotate(1) }};
+  keyboard_options[KEY_LEFT]  = {
+    id      : 'btnLeft',
+    listener: function () {game.move(-1)}
+  };
+  keyboard_options[KEY_RIGHT] = {
+    id      : 'btnRight',
+    listener: function () {game.move(1)}
+  };
+  keyboard_options[KEY_DOWN]  = {
+    id      : 'btnDown',
+    listener: function () {if (!game.moveDown(false)) game.nextFigure() }
+  };
+  keyboard_options[KEY_UP]    = {
+    id      : 'btnUp',
+    listener: function () {game.rotate(1) }
+  };
   
   new VirtualKeyboard(keyboard_options);
   
