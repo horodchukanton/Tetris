@@ -214,6 +214,7 @@ function Game() {
   this.field  = new Field(FIELD_WIDTH, FIELD_HEIGHT);
   this.score  = new Score();
   this.figure = new Figure();
+  this.rows_collected = 0;
   this.speed = 1;
   this.interval_handler = null;
 }
@@ -321,11 +322,12 @@ Game.prototype.nextFigure = function () {
 };
 
 Game.prototype.updateScore = function (rows_count) {
-  this.score.update(rows_count);
+  this.rows_collected += rows_count;
+  $('#lines').text(this.rows_collected);
   
-  var rows = this.score.getScore();
+  this.score.update(rows_count * this.speed);
   
-  if (Math.floor(rows / 10) + 1 > this.speed){
+  if (Math.floor(this.rows_collected / 10) + 1 > this.speed){
     this.setSpeed(this.speed + 1);
   }
 };
